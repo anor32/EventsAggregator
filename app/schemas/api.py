@@ -1,26 +1,12 @@
-from datetime import datetime
 from uuid import UUID
 
 from pydantic import BaseModel
 
-from app.schemas.client import RegisterEventSchema, UnregisterEventSchema
-
-
-class PlaceSchema(BaseModel):
-    id: UUID
-    name: str
-    city: str
-    address: str
-    seats_pattern: str
-
-
-class EventSchema(BaseModel):
-    name: str
-    place: PlaceSchema
-    event_time: datetime
-    registration_deadline: datetime
-    status: str
-    number_of_visitors: int
+from app.schemas.base import (
+    EventSchema,
+    RegisterEventSchema,
+    UnregisterEventSchema,
+)
 
 
 class GetEventSchema(EventSchema):

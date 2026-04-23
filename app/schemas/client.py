@@ -3,7 +3,7 @@ from uuid import UUID
 
 from pydantic import BaseModel
 
-from app.schemas.api import EventSchema
+from app.schemas.base import EventSchema
 
 
 class ClientEventSchema(EventSchema):
@@ -21,14 +21,3 @@ class EventsProviderResponseSchema(BaseModel):
     next: str | None
     previous: str | None
     results: list[ClientEventSchema]
-
-
-class RegisterEventSchema(BaseModel):
-    first_name: str
-    last_name: str
-    email: str
-    seat: str
-
-
-class UnregisterEventSchema(BaseModel):
-    ticket: id
