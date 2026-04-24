@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from app.schemas.base import EventSchema
 
@@ -18,6 +18,6 @@ class SeatsResponseSchema(BaseModel):
 
 
 class EventsProviderResponseSchema(BaseModel):
-    next: str | None
-    previous: str | None
     results: list[ClientEventSchema]
+
+    model_config = ConfigDict(from_attributes=True)

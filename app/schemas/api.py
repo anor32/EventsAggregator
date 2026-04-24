@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from app.schemas.base import (
     EventSchema,
@@ -9,8 +9,10 @@ from app.schemas.base import (
 )
 
 
-class GetEventSchema(EventSchema):
+class ApiEventGetSchema(EventSchema):
     id: UUID
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class SeatsSchema(BaseModel):
@@ -18,10 +20,12 @@ class SeatsSchema(BaseModel):
     available_seats: list[str]
 
 
-class ApiEventGetSchema(BaseModel):
+class ApiEventsSchema(BaseModel):
     next: str | None
     previous: str | None
-    results: list[GetEventSchema]
+    results: list[ApiEventGetSchema]
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class EventRegisterPost(RegisterEventSchema):

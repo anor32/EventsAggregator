@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class PlaceSchema(BaseModel):
@@ -10,6 +10,8 @@ class PlaceSchema(BaseModel):
     city: str
     address: str
     seats_pattern: str
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class EventSchema(BaseModel):
