@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 
 from sqlalchemy import UUID, ForeignKey, String
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.settings.db_config import Base
 
@@ -24,6 +24,8 @@ class Event(Base):
     created_at: Mapped[datetime]
     status_changed_at: Mapped[datetime]
 
+    place: Mapped["Place"] = relationship(back_populates="events")
+
 
 class Place(Base):
     __tablename__ = "places"
@@ -34,3 +36,11 @@ class Place(Base):
     city: Mapped[str]
     address: Mapped[str]
     seats_pattern: Mapped[str]
+
+    events: Mapped[list["Event"]] = relationship(back_populates="place")
+
+
+# class Seats(Base):
+#     id:uuid
+#     event:Mapped[uuid]= mapped_column(ForeignKey('events.id'),nullable=False)
+#     seat:str
