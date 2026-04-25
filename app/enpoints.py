@@ -10,7 +10,7 @@ from app.schemas.dependecies import EventServiceDep, PagesSchema
 router = APIRouter()
 
 
-@router.get("/api/health/")
+@router.get("/api/health", status_code=200)
 async def health():
     return {"status": "ok"}
 

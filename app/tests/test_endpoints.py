@@ -3,7 +3,7 @@ import pytest
 
 @pytest.mark.asyncio
 async def test_01_health_check(client):
-    response = await client.get(url='/api/health/')
+    response = await client.get(url='/api/health')
     assert response.status_code == 200
 
 
