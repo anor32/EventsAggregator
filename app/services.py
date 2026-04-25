@@ -1,4 +1,3 @@
-from datetime import datetime
 from uuid import UUID
 
 from app.clients.event_client import EventsProviderClient
@@ -18,12 +17,10 @@ class EventService:
         self.client = client
         self.db = db
 
-    async def sync_db(self, date=None) -> dict[str, str]:
-        today = datetime.now().strftime("%Y-%m-%d")
-        if date:
-            today = date
-        resp = await self.client.get_events(date=today)
+    async def sync_db(self, date="2000-01-01") -> dict[str, str]:
+        resp = await self.client.get_events(date=date)
         last_changed_date = max(event.changed_at for event in resp.results)
+
         last_changed_date = last_changed_date.strftime("%Y-%m-%d")
         if date > last_changed_date:
             db_response = self.db.load_to_base(resp.results)
@@ -31,7 +28,10 @@ class EventService:
             print("here")
             return db_response
         else:
-            print("cинхронизация не требуется")
+            print(
+                f"cинхронизация по дате{date} не "
+                f"требуется в базе данные от {last_changed_date},"
+            )
             return {
                 "message": "success",
                 "last_changed_date": last_changed_date,
@@ -57,9 +57,3 @@ class EventService:
         body = body.model_dump()
         message = await self.client.unregister_to_event(ticket_id, body)
         return message
-
-
-# db = DbQueries(session=Session())
-# client = EventsProviderClient()
-# e = EventService(db=db,client=client)
-# # print(asyncio.run(e.sync_db(date='2000-01-01')))
