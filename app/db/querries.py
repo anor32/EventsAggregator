@@ -45,13 +45,14 @@ class DbQueries:
         )
         return n_stmt
 
-    def load_to_base(self, dates: list[ClientEventSchema]) -> str:
+    def load_to_base(self, dates: list[ClientEventSchema]) -> dict[str, str]:
         event_data = []
         place_data = []
         for data in dates:
             en_data = data.model_dump(exclude={"place"})
             en_data["place_id"] = data.place.id
             place_dict = data.place.model_dump()
+
             if place_dict not in place_data:
                 place_data.append(place_dict)
             event_data.append(en_data)
@@ -62,4 +63,4 @@ class DbQueries:
         self.session.execute(e_stmt)
         self.session.commit()
 
-        return "success added"
+        return {"msg": "success added"}
