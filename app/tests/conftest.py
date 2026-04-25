@@ -3,7 +3,7 @@ from httpx import AsyncClient, ASGITransport
 
 from app.main import app
 from app.schemas.api import ApiGetPagesEvent, EventRegisterPost
-from app.schemas.base import RegisterEventSchema
+
 
 
 @pytest_asyncio.fixture()
