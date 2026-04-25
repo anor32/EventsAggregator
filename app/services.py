@@ -2,7 +2,7 @@ from datetime import datetime
 from uuid import UUID
 
 from app.clients.event_client import EventsProviderClient
-from app.db.querries import DbQueries
+from app.db.querries import DbRepository
 from app.schemas.api import (
     ApiEventGetSchema,
     ApiEventsSchema,
@@ -14,17 +14,28 @@ from app.schemas.client import SeatsResponseSchema
 
 
 class EventService:
-    def __init__(self, db: DbQueries, client: EventsProviderClient):
+    def __init__(self, db: DbRepository, client: EventsProviderClient):
         self.client = client
         self.db = db
 
-    async def sync_db(self, date=None) -> str:
+    async def sync_db(self, date=None) -> dict[str, str]:
         today = datetime.now().strftime("%Y-%m-%d")
         if date:
             today = date
         resp = await self.client.get_events(date=today)
-        message = self.db.load_to_base(resp.results)
-        return message
+        last_changed_date = max(event.changed_at for event in resp.results)
+        last_changed_date = last_changed_date.strftime("%Y-%m-%d")
+        if date > last_changed_date:
+            db_response = self.db.load_to_base(resp.results)
+            db_response["last_changed_date"] = date
+            print("here")
+            return db_response
+        else:
+            print("cинхронизация не требуется")
+            return {
+                "message": "success",
+                "last_changed_date": last_changed_date,
+            }
 
     async def get_events(self, data: ApiGetPagesEvent) -> ApiEventsSchema:
         return self.db.get_all_events(
@@ -46,3 +57,9 @@ class EventService:
         body = body.model_dump()
         message = await self.client.unregister_to_event(ticket_id, body)
         return message
+
+
+# db = DbQueries(session=Session())
+# client = EventsProviderClient()
+# e = EventService(db=db,client=client)
+# # print(asyncio.run(e.sync_db(date='2000-01-01')))
