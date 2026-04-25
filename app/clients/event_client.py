@@ -1,6 +1,98 @@
-from app.setings.config import EVENTS_API_KEY
+from typing import Any
+
+import httpx
+
+from app.schemas.api import EventRegisterPost
+from app.schemas.client import (
+    EventsProviderResponseSchema as eventsResp,
+    SeatsResponseSchema,
+)
+from app.settings.config import EVENTS_API_KEY
+from app.utils import retry_request
 
 
 class EventsProviderClient:
-    base_url = "http://events-provider.dev-2.python-labs.ru"
-    headers = {"x-api-key": EVENTS_API_KEY}
+    _base_url = "http://events-provider.dev-2.python-labs.ru"
+    _headers = {
+        "x-api-key": EVENTS_API_KEY,
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+    }
+
+    async def fetch_page(self, url) -> dict[Any]:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                url=url,
+                headers=self._headers,
+                follow_redirects=True,
+                timeout=10,
+            )
+            return response.json()
+
+    async def get_events(self, date) -> eventsResp:
+        url = self._base_url + f"/api/events/?changed_at={date}/"
+        response = await self.fetch_page(url)
+        results = []
+        while response["next"]:
+            url = response["next"]
+            response = await self.fetch_page(url)
+            results.extend(response["results"])
+
+        return eventsResp(results=results)
+
+    async def get_seats(self, event_id) -> SeatsResponseSchema:
+        path = f"/api/events/{event_id}/seats/"
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                self._base_url + path,
+                headers=self._headers,
+                follow_redirects=True,
+                timeout=10,
+            )
+
+            if response.status_code > 404:
+                response = await retry_request(
+                    client, response.request, max_retry=3, delay=1
+                )
+
+        return SeatsResponseSchema(**response.json())
+
+    async def register_to_event(self, event_id, body: EventRegisterPost):
+        path = f"/api/events/{event_id}/register/"
+        body = body.model_dump()
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                self._base_url + path,
+                headers=self._headers,
+                follow_redirects=False,
+                json=body,
+                timeout=10,
+            )
+            if response.status_code == 308:
+                new_url = response.headers["location"] + "/"
+                new_response = await client.post(
+                    new_url,
+                    headers=self._headers,
+                    follow_redirects=False,
+                    json=body,
+                    timeout=10,
+                )
+
+                return new_response.json()
+        return response.json()
+
+    async def unregister_to_event(self, event_id, body: dict[str, Any]):
+        path = f"/api/events/{event_id}/unregister/"
+        async with httpx.AsyncClient() as client:
+            response = await client.request(
+                method="DELETE",
+                url=self._base_url + path,
+                json=body,
+                headers=self._headers,
+                follow_redirects=True,
+                timeout=10,
+            )
+            return response.json()
+
+
+e = EventsProviderClient()
