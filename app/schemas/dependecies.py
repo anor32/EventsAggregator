@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import Depends
 
 from app.clients.event_client import EventsProviderClient
-from app.db.querries import DbQueries
+from app.db.querries import DbRepository
 from app.schemas.api import ApiGetPagesEvent
 from app.services import EventService
 from app.settings.db_config import Session
@@ -19,7 +19,7 @@ def get_db():
 
 def get_service(db: Session = Depends(get_db)):
     client = EventsProviderClient()
-    db = DbQueries(db)
+    db = DbRepository(db)
     return EventService(db, client)
 
 
