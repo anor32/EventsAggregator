@@ -18,7 +18,7 @@ async def health():
 @router.post("/api/sync/trigger")
 async def manual_sync(service: EventServiceDep) -> dict[str, str]:
     resp = await service.sync_db()
-    return {"msg": resp}
+    return resp
 
 
 @router.get("/api/events")
