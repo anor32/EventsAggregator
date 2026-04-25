@@ -9,7 +9,7 @@ from app.schemas.client import ClientEventSchema
 from app.settings.db_config import Base, Session
 
 
-class DbQueries:
+class DbRepository:
     def __init__(self, session: Session):
         self.session = session
 
