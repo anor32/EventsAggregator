@@ -3,8 +3,14 @@ from uuid import UUID
 
 from app.clients.event_client import EventsProviderClient
 from app.db.querries import DbQueries
-from app.schemas.api import ApiEventGetSchema, ApiEventsSchema
-from app.settings.db_config import Session
+from app.schemas.api import (
+    ApiEventGetSchema,
+    ApiEventsSchema,
+    ApiGetPagesEvent,
+    EventRegisterPost,
+)
+from app.schemas.base import RegisterEventSchema
+from app.schemas.client import SeatsResponseSchema
 
 
 class EventService:
@@ -12,27 +18,31 @@ class EventService:
         self.client = client
         self.db = db
 
-    async def sync_db(self) -> dict[str]:
+    async def sync_db(self, date=None) -> str:
         today = datetime.now().strftime("%Y-%m-%d")
+        if date:
+            today = date
         resp = await self.client.get_events(date=today)
-        print(resp)
-        # message = self.db.load_to_base(resp.results)
-        return resp
+        message = self.db.load_to_base(resp.results)
+        return message
 
-    async def get_events(self, date_from: datetime = None) -> ApiEventsSchema:
-        if not date_from:
-            date_from = datetime.now().strftime("%Y-%m-%d")
-        return self.db.get_all_events(date_from)
+    async def get_events(self, data: ApiGetPagesEvent) -> ApiEventsSchema:
+        return self.db.get_all_events(
+            data.page, data.page_size, data.date_from
+        )
 
     async def event_detail(self, event_id: UUID | str) -> ApiEventGetSchema:
         return self.db.get_event(event_id)
 
+    async def get_available_seats(self, event_id) -> SeatsResponseSchema:
+        seats = await self.client.get_seats(event_id)
+        return seats
 
-client = EventsProviderClient()
-session = Session()
-db = DbQueries(session=session)
-e = EventService(db=db, client=client)
+    async def registration(self, event_id, body: EventRegisterPost):
+        ticket = await self.client.register_to_event(event_id, body)
+        return ticket
 
-
-event_id = "3c141c94-bd42-4462-8d72-9a4f9d6007bc"
-# pprint(asyncio.run(e.sync_db()))
+    async def un_registration(self, ticket_id, body: RegisterEventSchema):
+        body = body.model_dump()
+        message = await self.client.unregister_to_event(ticket_id, body)
+        return message
