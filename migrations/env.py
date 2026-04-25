@@ -6,7 +6,7 @@ from sqlalchemy import pool
 from alembic import context
 
 from app.settings.db_config import Base, get_sync_db_url
-
+from app.db.models import Place,Event
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
