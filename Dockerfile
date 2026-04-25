@@ -14,4 +14,6 @@ USER appuser
 
 
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD bash -c "python -m api.commands.manage_db
+ -op create && alembic upgrade head &&
+ uvicorn api.main:app --reload --host 0.0.0.0 --port 8000"
