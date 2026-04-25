@@ -31,11 +31,7 @@ def get_sync_db_url() -> str:
 
 def get_system_db_url() -> str:
     SYSTEM_URL = (
-        f"postgresql://"
-        f"{DB_USERNAME}"
-        f":{DB_PASSWORD}"
-        f"@{DB_HOST}:"
-        f"5432/postgres"
+        f"postgresql://{DB_USERNAME}:{DB_PASSWORD}@{DB_HOST}:5432/postgres"
     )
 
     return SYSTEM_URL
