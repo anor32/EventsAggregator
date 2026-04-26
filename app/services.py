@@ -14,6 +14,7 @@ from app.schemas.api import (
 )
 from app.schemas.base import RegisterEventSchema
 from app.schemas.client import SeatsResponseSchema
+from app.settings.logs_config import api_logger
 
 
 class EventService:
@@ -22,7 +23,7 @@ class EventService:
         self.db = db
 
     async def sync_db(self, date: str | datetime = "2000-01-01") -> dict:
-        print("получение данных от клиента")
+        api_logger.info("Получение данных от клиента")
         if isinstance(date, datetime):
             date = date.strftime("%Y-%m-%d")
         resp = await self.client.get_events(date=date)
@@ -30,17 +31,16 @@ class EventService:
         last_client_date = max(event.changed_at for event in resp.results)
         db_last_date = self.db.get_event_last_date_updated()
         last_client_date = last_client_date.replace(tzinfo=None)
-        print(db_last_date < last_client_date)
 
         if last_client_date > db_last_date:
             db_response = self.db.load_to_base(resp.results)
             db_response["last_changed_date"] = last_client_date
 
-            print("Синхронизация успешно прошла")
+            api_logger.info("Синхронизация успешно прошла")
             return db_response
         else:
-            print(
-                f"cинхронизация по дате{date} не "
+            api_logger.info(
+                f"cинхронизация по дате {date} не "
                 f"требуется в базе данные от {last_client_date},"
             )
 

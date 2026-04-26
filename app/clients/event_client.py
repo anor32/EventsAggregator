@@ -8,6 +8,7 @@ from app.schemas.client import (
     SeatsResponseSchema,
 )
 from app.settings.config import EVENTS_API_KEY
+from app.settings.logs_config import api_logger
 from app.utils import retry_request
 
 
@@ -26,6 +27,10 @@ class EventsProviderClient:
                 headers=self._headers,
                 follow_redirects=True,
                 timeout=10,
+            )
+            api_logger.info(
+                f"выполнен запрос к клиенту "
+                f"{response.status_code} url {response.request.url.path} "
             )
             return response.json()
 

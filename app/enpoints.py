@@ -7,6 +7,7 @@ from app.schemas.api import (
     SynchronizeResponseSchema,
 )
 from app.schemas.dependecies import EventServiceDep, PagesSchema
+from app.settings.logs_config import api_logger
 from app.utils import default_endpoint_exception
 
 router = APIRouter()
@@ -19,17 +20,18 @@ async def health():
 
 @router.post("/api/sync/trigger")
 async def manual_sync(service: EventServiceDep) -> SynchronizeResponseSchema:
-    print("запуск ручной синхронизации ")
+    api_logger.info("Запуск ручной синхронизации ")
     try:
         resp = await service.sync_db()
         schema = SynchronizeResponseSchema(message=resp["message"])
     except ValueError as e:
         print(e)
     except Exception as e:
-        print(e)
+        api_logger.error(f"ошибка в эндпоните /api/sync/trigger {e}")
         message = "Внутреняя ошибка сервера "
         raise HTTPException(status_code=500, detail=message)
     else:
+        api_logger.info("Ручная синхронизация завершена")
         return schema
 
 
@@ -43,6 +45,10 @@ async def get_events(
         resp = await service.get_events(data, request=request)
     except ValueError as e:
         return {"error": str(e)}
+    except Exception as e:
+        api_logger.error(f"ошибка в эндпоните /api/events {e}")
+        message = f"Внутреняя ошибка сервера{e}"
+        raise HTTPException(status_code=500, detail=message)
     else:
         return resp
 

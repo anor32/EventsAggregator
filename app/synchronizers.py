@@ -1,6 +1,7 @@
 import asyncio
 
 from app.services import EventService
+from app.settings.logs_config import api_logger
 
 
 class BackgroundSynchronizer:
@@ -13,9 +14,8 @@ class BackgroundSynchronizer:
             date = "2000-01-01"
 
         while True:
-            print(date)
-            print(f"Фоновавя синхронизация по дате {date}")
+            api_logger.info(f"Фоновавя синхронизация по дате {date}")
             sync_dict = await self._service.sync_db(date)
             date = sync_dict["last_changed_date"]
-            print(sync_dict)
+            api_logger.info("Фоновая синхронизация завершена ")
             await asyncio.sleep(delay * 60 * 60)
