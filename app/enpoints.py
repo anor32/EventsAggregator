@@ -4,6 +4,7 @@ from app.schemas.api import (
     ApiEventGetSchema,
     ApiEventsSchema,
     EventRegisterPost,
+    SynchronizeResponseSchema,
 )
 from app.schemas.dependecies import EventServiceDep, PagesSchema
 
@@ -16,20 +17,27 @@ async def health():
 
 
 @router.post("/api/sync/trigger")
-async def manual_sync(service: EventServiceDep) -> dict[str, str]:
-    resp = await service.sync_db()
-    return resp
+async def manual_sync(service: EventServiceDep) -> SynchronizeResponseSchema:
+    print("запуск ручной синхронизации ")
+    try:
+        resp = await service.sync_db()
+        schema = SynchronizeResponseSchema(message=resp["message"])
+    except ValueError as e:
+        print(e)
+    else:
+        return schema
 
 
 @router.get("/api/events")
 async def get_events(
     data: PagesSchema, service: EventServiceDep
-) -> ApiEventsSchema:
+) -> ApiEventsSchema | dict[str, str]:
     try:
         resp = await service.get_events(data)
     except ValueError as e:
         return {"error": str(e)}
-    return resp
+    else:
+        return resp
 
 
 @router.get("/api/events/{event_id}")
