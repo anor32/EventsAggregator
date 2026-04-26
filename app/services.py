@@ -1,3 +1,4 @@
+from datetime import datetime
 from uuid import UUID
 
 from app.clients.event_client import EventsProviderClient
@@ -17,24 +18,32 @@ class EventService:
         self.client = client
         self.db = db
 
-    async def sync_db(self, date="2000-01-01") -> dict[str, str]:
+    async def sync_db(self, date: str | datetime = "2000-01-01") -> dict:
+        print("получение данных от клиента")
+        if isinstance(date, datetime):
+            date = date.strftime("%Y-%m-%d")
         resp = await self.client.get_events(date=date)
-        last_changed_date = max(event.changed_at for event in resp.results)
 
-        last_changed_date = last_changed_date.strftime("%Y-%m-%d")
-        if date > last_changed_date:
+        last_client_date = max(event.changed_at for event in resp.results)
+        db_last_date = self.db.get_event_last_date_updated()
+        last_client_date = last_client_date.replace(tzinfo=None)
+        print(db_last_date < last_client_date)
+
+        if last_client_date > db_last_date:
             db_response = self.db.load_to_base(resp.results)
-            db_response["last_changed_date"] = date
-            print("here")
+            db_response["last_changed_date"] = last_client_date
+            print(db_response)
+            print("Синхронизация успешно прошла")
             return db_response
         else:
             print(
                 f"cинхронизация по дате{date} не "
-                f"требуется в базе данные от {last_changed_date},"
+                f"требуется в базе данные от {last_client_date},"
             )
+            print(last_client_date)
             return {
                 "message": "success",
-                "last_changed_date": last_changed_date,
+                "last_changed_date": last_client_date,
             }
 
     async def get_events(self, data: ApiGetPagesEvent) -> ApiEventsSchema:
