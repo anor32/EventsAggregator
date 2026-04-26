@@ -27,7 +27,7 @@ class EventService:
         if isinstance(date, datetime):
             date = date.strftime("%Y-%m-%d")
         resp = await self.client.get_pages(date=date)
-
+        api_logger.info("данные от клиента получены клиента")
         last_client_date = max(event.changed_at for event in resp.results)
         db_last_date = self.db.get_event_last_date_updated()
         last_client_date = last_client_date.replace(tzinfo=None)

@@ -7,6 +7,7 @@ from app.db.models import Event, Place
 from app.schemas.api import ApiEventGetSchema
 from app.schemas.client import ClientEventSchema
 from app.settings.db_config import Base, Session
+from app.settings.logs_config import api_logger
 
 
 class DbRepository:
@@ -71,10 +72,15 @@ class DbRepository:
         return {"msg": "success added"}
 
     def get_event_last_date_updated(self):
-        last_updated = self.session.scalars(
-            select(Event.changed_at).order_by(Event.changed_at.desc()).limit(1)
-        ).all()
-        if not last_updated:
-            return datetime(2000, 1, 1)
-
-        return last_updated[0]
+        try:
+            last_updated = self.session.scalars(
+                select(Event.changed_at)
+                .order_by(Event.changed_at.desc())
+                .limit(1)
+            ).all()
+            if not last_updated:
+                return datetime(2000, 1, 1)
+        except Exception as e:
+            api_logger.error("ошибка загрузки данных  в базу ", type(e), e)
+        else:
+            return last_updated[0]

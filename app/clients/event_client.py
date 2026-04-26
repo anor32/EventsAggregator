@@ -23,44 +23,45 @@ class EventsProviderClient:
 
     async def fetch_page(self, url) -> dict[Any] | None:
         try:
+            api_logger.info("Начало нового запроса")
             async with httpx.AsyncClient() as client:
                 response = await client.get(
                     url=url,
                     headers=self._headers,
                     follow_redirects=True,
-                    timeout=60,
                 )
                 api_logger.info(
                     f"выполнен запрос к клиенту "
                     f"{response.status_code} url {response.request.url.path} "
                 )
+
         except TimeoutException as e:
             api_logger.error(f"Превышено время ожидания от клиента {str(e)}")
-            raise ValueError("Превышено время ожидания от клиента")
+            return None
         except httpx.ConnectError as e:
             api_logger.error(f"Ошибка подключения к {url}: {e}")
-            raise ValueError(f"Не удалось подключиться к external API: {url}")
+            return None
         except httpx.HTTPStatusError as e:
             api_logger.error(
                 f"HTTP ошибка {e.response.status_code} при запросе к {url}"
             )
-            raise ValueError(
-                f"External API вернул ошибку: {e.response.status_code}"
-            )
-
+            return None
         except Exception as e:
             api_logger.error(
                 f"Неизвестная ошибка при запросе к {url}: {type(e)}: {e}"
             )
             return None
+        else:
+            return response.json()
 
-        return response.json()
-
-    async def get_events(self, date) -> eventsResp:
+    async def get_pages(self, date) -> eventsResp:
         url = self._base_url + f"/api/events/?changed_at={date}/"
         response = await self.fetch_page(url)
         results = []
-        while response and response["next"]:
+        if not response:
+            api_logger.error("Запрос не был выполнен синхронизация неудалась")
+
+        while response["next"]:
             url = response["next"]
             response = await self.fetch_page(url)
             results.extend(response["results"])
