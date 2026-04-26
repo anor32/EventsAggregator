@@ -27,7 +27,7 @@ async def manual_sync(service: EventServiceDep) -> SynchronizeResponseSchema:
     except ValueError as e:
         print(e)
     except Exception as e:
-        api_logger.error(f"ошибка в эндпоните /api/sync/trigger {e}")
+        api_logger.error(f"ошибка в эндпоните /api/sync/trigger {str(e)}")
         message = "Внутреняя ошибка сервера "
         raise HTTPException(status_code=500, detail=message)
     else:
@@ -46,7 +46,7 @@ async def get_events(
     except ValueError as e:
         return {"error": str(e)}
     except Exception as e:
-        api_logger.error(f"ошибка в эндпоните /api/events {e}")
+        api_logger.error(f"ошибка в эндпоните /api/events {str(e)}")
         message = f"Внутреняя ошибка сервера{e}"
         raise HTTPException(status_code=500, detail=message)
     else:
