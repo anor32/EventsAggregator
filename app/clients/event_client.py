@@ -1,6 +1,7 @@
 from typing import Any
 
 import httpx
+from httpx import TimeoutException
 
 from app.schemas.api import EventRegisterPost
 from app.schemas.client import (
@@ -20,25 +21,46 @@ class EventsProviderClient:
         "Accept": "application/json",
     }
 
-    async def fetch_page(self, url) -> dict[Any]:
-        async with httpx.AsyncClient() as client:
-            response = await client.get(
-                url=url,
-                headers=self._headers,
-                follow_redirects=True,
-                timeout=10,
+    async def fetch_page(self, url) -> dict[Any] | None:
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.get(
+                    url=url,
+                    headers=self._headers,
+                    follow_redirects=True,
+                    timeout=10,
+                )
+                api_logger.info(
+                    f"выполнен запрос к клиенту "
+                    f"{response.status_code} url {response.request.url.path} "
+                )
+        except TimeoutException as e:
+            api_logger.error(f"Превышено время ожидания от клиента {str(e)}")
+            raise ValueError("Превышено время ожидания от клиента")
+        except httpx.ConnectError as e:
+            api_logger.error(f"Ошибка подключения к {url}: {e}")
+            raise ValueError(f"Не удалось подключиться к external API: {url}")
+        except httpx.HTTPStatusError as e:
+            api_logger.error(
+                f"HTTP ошибка {e.response.status_code} при запросе к {url}"
             )
-            api_logger.info(
-                f"выполнен запрос к клиенту "
-                f"{response.status_code} url {response.request.url.path} "
+            raise ValueError(
+                f"External API вернул ошибку: {e.response.status_code}"
             )
-            return response.json()
+
+        except Exception as e:
+            api_logger.error(
+                f"Неизвестная ошибка при запросе к {url}: {type(e)}: {e}"
+            )
+            return None
+
+        return response.json()
 
     async def get_events(self, date) -> eventsResp:
         url = self._base_url + f"/api/events/?changed_at={date}/"
         response = await self.fetch_page(url)
         results = []
-        while response["next"]:
+        while response and response["next"]:
             url = response["next"]
             response = await self.fetch_page(url)
             results.extend(response["results"])
@@ -98,6 +120,3 @@ class EventsProviderClient:
                 timeout=10,
             )
             return response.json()
-
-
-e = EventsProviderClient()
