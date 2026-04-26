@@ -16,7 +16,7 @@ class DbRepository:
 
     def get_events_count(self, date_from) -> int:
         stmt = select(func.count()).select_from(Event)
-        stmt = stmt.where(Event.event_time >= date_from)
+        stmt = stmt.where(Event.changed_at >= date_from)
         return self.session.scalar(stmt) or 0
 
     def get_all_events(
