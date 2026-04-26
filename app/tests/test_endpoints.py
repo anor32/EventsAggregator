@@ -10,7 +10,7 @@ async def test_01_health_check(client):
 @pytest.mark.asyncio
 async def test_02_manual_sync(client):
     response = await client.post('/api/sync/trigger')
-    assert response.json() == {"msg": "success added"}
+    assert response.json() == {'message': 'success'}
 
 
 @pytest.mark.asyncio
