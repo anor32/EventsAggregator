@@ -1,8 +1,11 @@
 from datetime import datetime
 from uuid import UUID
 
+from fastapi import Request
+
 from app.clients.event_client import EventsProviderClient
 from app.db.querries import DbRepository
+from app.paginators import ApiPaginator
 from app.schemas.api import (
     ApiEventGetSchema,
     ApiEventsSchema,
@@ -32,7 +35,7 @@ class EventService:
         if last_client_date > db_last_date:
             db_response = self.db.load_to_base(resp.results)
             db_response["last_changed_date"] = last_client_date
-            print(db_response)
+
             print("Синхронизация успешно прошла")
             return db_response
         else:
@@ -40,16 +43,29 @@ class EventService:
                 f"cинхронизация по дате{date} не "
                 f"требуется в базе данные от {last_client_date},"
             )
-            print(last_client_date)
+
             return {
                 "message": "success",
                 "last_changed_date": last_client_date,
             }
 
-    async def get_events(self, data: ApiGetPagesEvent) -> ApiEventsSchema:
-        return self.db.get_all_events(
+    async def get_events(
+        self, data: ApiGetPagesEvent, request: Request
+    ) -> ApiEventsSchema:
+        events = self.db.get_all_events(
             data.page, data.page_size, data.date_from
         )
+        count = self.db.get_events_count(date_from=data.date_from)
+        path = "/api/events"
+        paginator = ApiPaginator(
+            count, path, request, page=data.page - 1, page_size=data.page_size
+        )
+        next_url = paginator.get_next_url()
+        previous_url = paginator.get_previous_url()
+        schema = ApiEventsSchema(
+            next=next_url, previous=previous_url, count=count, results=events
+        )
+        return schema
 
     async def event_detail(self, event_id: UUID | str) -> ApiEventGetSchema:
         return self.db.get_event(event_id)

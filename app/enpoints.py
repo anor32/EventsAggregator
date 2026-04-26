@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 
 from app.schemas.api import (
     ApiEventGetSchema,
@@ -35,10 +35,12 @@ async def manual_sync(service: EventServiceDep) -> SynchronizeResponseSchema:
 
 @router.get("/api/events")
 async def get_events(
-    data: PagesSchema, service: EventServiceDep
+    data: PagesSchema,
+    service: EventServiceDep,
+    request: Request,
 ) -> ApiEventsSchema | dict[str, str]:
     try:
-        resp = await service.get_events(data)
+        resp = await service.get_events(data, request=request)
     except ValueError as e:
         return {"error": str(e)}
     else:
