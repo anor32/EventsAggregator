@@ -1,10 +1,10 @@
 from datetime import datetime
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert
 
 from app.db.models import Event, Place
-from app.schemas.api import ApiEventGetSchema, ApiEventsSchema
+from app.schemas.api import ApiEventGetSchema
 from app.schemas.client import ClientEventSchema
 from app.settings.db_config import Base, Session
 
@@ -13,18 +13,23 @@ class DbRepository:
     def __init__(self, session: Session):
         self.session = session
 
+    def get_events_count(self, date_from) -> int:
+        stmt = select(func.count()).select_from(Event)
+        stmt = stmt.where(Event.event_time >= date_from)
+        return self.session.scalar(stmt) or 0
+
     def get_all_events(
         self, page=1, page_size=20, date_from: datetime = None
-    ) -> ApiEventsSchema:
+    ) -> list[ApiEventGetSchema]:
         if not date_from:
             date_from = datetime.now()
         offset = (page - 1) * page_size
         stmt = select(Event).where(Event.event_time >= date_from)
         stmt = stmt.offset(offset).limit(page_size)
         events = self.session.scalars(stmt).all()
+        results = [ApiEventGetSchema.model_validate(event) for event in events]
 
-        schema = ApiEventsSchema(next=None, previous=None, results=events)
-        return schema
+        return results
 
     def get_event(self, event_id) -> ApiEventGetSchema | str:
         event = self.session.scalars(
