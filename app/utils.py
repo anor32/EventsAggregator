@@ -1,5 +1,7 @@
 import asyncio
 
+from fastapi import HTTPException
+
 
 async def retry_request(client, request, max_retry=3, delay=1):
     retry = 1
@@ -20,3 +22,19 @@ async def retry_request(client, request, max_retry=3, delay=1):
         raise ValueError("400|Ошибка неправильный запрос клиента")
 
     return response
+
+
+def default_endpoint_exception(func):
+    async def wrapper(*args, **kwargs):
+        try:
+            resp = await func(*args, **kwargs)
+        except ValueError as e:
+            status, message = str(e).split("|")
+            raise HTTPException(status_code=int(status), detail=message)
+        except Exception as e:
+            message = f"Внутреняя ошибка сервера {e}"
+            raise HTTPException(status_code=500, detail=message)
+        else:
+            return resp
+
+    return wrapper
