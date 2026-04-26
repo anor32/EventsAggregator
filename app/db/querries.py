@@ -64,3 +64,12 @@ class DbRepository:
         self.session.commit()
 
         return {"msg": "success added"}
+
+    def get_event_last_date_updated(self):
+        last_updated = self.session.scalars(
+            select(Event.changed_at).order_by(Event.changed_at.desc()).limit(1)
+        ).all()
+        if not last_updated:
+            return datetime(2000, 1, 1)
+
+        return last_updated[0]
