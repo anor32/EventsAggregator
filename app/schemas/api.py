@@ -1,4 +1,3 @@
-from datetime import datetime
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -24,6 +23,7 @@ class SeatsSchema(BaseModel):
 class ApiEventsSchema(BaseModel):
     next: str | None
     previous: str | None
+    count: int | None
     results: list[ApiEventGetSchema]
 
     model_config = ConfigDict(from_attributes=True)
@@ -38,9 +38,9 @@ class EventDeleteRegister(UnregisterEventSchema):
 
 
 class ApiGetPagesEvent(BaseModel):
-    page: int = Field(1, ge=1)
-    page_size: int = 20
-    date_from: datetime = Field(default_factory=datetime.now)
+    page: int | None = Field(1, ge=1)
+    page_size: int | None = 20
+    date_from: str | None = "2001-01-01"
 
 
 class SynchronizeResponseSchema(BaseModel):
