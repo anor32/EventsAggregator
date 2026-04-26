@@ -41,3 +41,7 @@ class ApiGetPagesEvent(BaseModel):
     page: int = Field(1, ge=1)
     page_size: int = 20
     date_from: datetime = Field(default_factory=datetime.now)
+
+
+class SynchronizeResponseSchema(BaseModel):
+    message: str
