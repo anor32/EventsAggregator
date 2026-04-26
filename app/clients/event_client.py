@@ -28,7 +28,7 @@ class EventsProviderClient:
                     url=url,
                     headers=self._headers,
                     follow_redirects=True,
-                    timeout=10,
+                    timeout=60,
                 )
                 api_logger.info(
                     f"выполнен запрос к клиенту "
@@ -93,7 +93,7 @@ class EventsProviderClient:
                 headers=self._headers,
                 follow_redirects=False,
                 json=body,
-                timeout=10,
+                timeout=60,
             )
             if response.status_code == 308:
                 new_url = response.headers["location"] + "/"
@@ -102,7 +102,7 @@ class EventsProviderClient:
                     headers=self._headers,
                     follow_redirects=False,
                     json=body,
-                    timeout=10,
+                    timeout=60,
                 )
 
                 return new_response.json()
@@ -117,6 +117,6 @@ class EventsProviderClient:
                 json=body,
                 headers=self._headers,
                 follow_redirects=True,
-                timeout=10,
+                timeout=60,
             )
             return response.json()
