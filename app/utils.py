@@ -27,11 +27,12 @@ async def retry_request(client, request, max_retry=3, delay=1):
 
 
 def default_endpoint_exception(func):
-    async def wrapper(*args, **kwargs):
+    async def wrapper():
         try:
-            resp = await func(*args, **kwargs)
+            resp = await func()
         except ValueError as e:
             status, message = str(e).split("|")
+            print("here")
             raise HTTPException(status_code=int(status), detail=message)
         except Exception as e:
             api_logger.error(e)
