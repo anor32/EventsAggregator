@@ -32,7 +32,8 @@ def default_endpoint_exception(func):
             status, message = str(e).split("|")
             raise HTTPException(status_code=int(status), detail=message)
         except Exception as e:
-            message = f"Внутреняя ошибка сервера {e}"
+            print(e)
+            message = f"Внутреняя ошибка сервера{e}"
             raise HTTPException(status_code=500, detail=message)
         else:
             return resp
