@@ -29,6 +29,7 @@ class EventsProviderClient:
                     url=url,
                     headers=self._headers,
                     follow_redirects=True,
+                    timeout=30,
                 )
                 api_logger.info(
                     f"выполнен запрос к клиенту "
