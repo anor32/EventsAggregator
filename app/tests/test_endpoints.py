@@ -30,21 +30,33 @@ async def test_05_get_event(client, event_id):
 @pytest.mark.asyncio
 async def test_06_get_seats(client, event_id):
     response = await client.get(f'/api/events/{event_id}/seats')
-    assert response.status_code == 200 or response.status_code == 503
-    if response.status_code ==200:
-        assert  response.json().get('event_time')
-
-
-@pytest.mark.asyncio
-async def test_07_register(client,register_user):
-    response = await client.post(f'/api/tickets',json=register_user.model_dump(mode='json'))
-    assert response.status_code == 201
-    assert response.json().get('ticket_id')
-
-
-
-@pytest.mark.asyncio
-async def test_08_unregister(client,register_user,ticket_id):
-    response = await client.post(f'/api/tickets/{ticket_id}',json=register_user.model_dump(mode='json'))
     assert response.status_code == 200
-    assert response.json().get('ticket_id')
+    if response.status_code ==200:
+        assert  response.json().get('seats')
+
+
+
+@pytest.mark.asyncio
+async def test_07_register_unregister(client,register_user,event_id):
+    response = await client.get(f'/api/events/{event_id}/seats')
+
+    seat = response.json()['seats'][0]
+    register_user.seat = seat
+    response = await client.post(f'/api/tickets',json=register_user.model_dump(mode='json'))
+
+    assert response.status_code == 201
+
+
+    ticket_id = response.json()['ticket_id']
+    data = register_user.model_dump()
+    data['ticket_id'] = ticket_id
+
+    response = await client.request(
+        method="DELETE",
+        url=f'/api/tickets/{ticket_id}',
+
+    )
+
+
+    assert response.status_code == 200
+    assert response.json().get('success')

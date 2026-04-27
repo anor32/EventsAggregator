@@ -15,7 +15,7 @@ async def client():
 
 @pytest_asyncio.fixture()
 async def event_id():
-   return '3c141c94-bd42-4462-8d72-9a4f9d6007bc'
+   return '007d362c-6c9d-4293-9f83-4f741de0056f'
 
 
 @pytest_asyncio.fixture()
@@ -26,10 +26,10 @@ async def pages_body():
 @pytest_asyncio.fixture()
 async def register_user(event_id):
     data = {
-         "id":  str(event_id),
+         "id":  '007d362c-6c9d-4293-9f83-4f741de0056f',
          "first_name": "Иван",
          "last_name": "Иванов",
-         "email": "ivan@example.com",
-         "seat": "B1"
+         "email": "ivan@example0.com",
+         "seat": "B40"
     }
     return EventRegisterPost(**data)
