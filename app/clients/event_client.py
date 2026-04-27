@@ -59,7 +59,7 @@ class EventsProviderClient:
             return response.json()
 
     async def get_pages(self, date) -> eventsResp | None:
-        url = self._base_url + f"/api/events/?changed_at={date}/"
+        url = self._base_url + f"/api/events/?changed_at={date}"
         response = await self.fetch_page(url)
         results = []
         if not response:
