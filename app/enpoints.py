@@ -22,7 +22,7 @@ async def health():
 @router.post("/api/sync/trigger")
 async def manual_sync(
     service: EventServiceDep,
-) -> SynchronizeResponseSchema | dict[str]:
+) -> SynchronizeResponseSchema:
     api_logger.info("Запуск ручной синхронизации ")
     try:
         resp = await service.sync_db()
@@ -34,7 +34,7 @@ async def manual_sync(
             )
         schema = SynchronizeResponseSchema(message=resp["message"])
     except ValueError as e:
-        print(e)
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         api_logger.error(f"ошибка в эндпоните /api/sync/trigger {e}")
         message = "Внутреняя ошибка сервера "
@@ -49,11 +49,11 @@ async def get_events(
     data: PagesSchema,
     service: EventServiceDep,
     request: Request,
-) -> ApiEventsSchema | dict[str, str]:
+) -> ApiEventsSchema:
     try:
         resp = await service.get_events(data, request=request)
     except ValueError as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         api_logger.error(f"ошибка в эндпоните /api/events {str(e)}")
         message = "Внутреняя ошибка сервера"
@@ -70,7 +70,6 @@ async def event_detail(
         resp = await service.event_detail(event_id)
     except ValueError as e:
         status, message = str(e).split("|")
-        print("here")
         raise HTTPException(status_code=int(status), detail=message)
     except Exception as e:
         api_logger.error(e)
