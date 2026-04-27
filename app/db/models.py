@@ -40,7 +40,25 @@ class Place(Base):
     events: Mapped[list["Event"]] = relationship(back_populates="place")
 
 
-# class Seats(Base):
-#     id:uuid
-#     event:Mapped[uuid]= mapped_column(ForeignKey('events.id'),nullable=False)
-#     seat:str
+# class User(Base):
+#     __tablename__ = 'users'
+#     id: Mapped[UUID] = mapped_column(
+#         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+#     )
+#     first_name:Mapped[str]
+#     last_name:Mapped[str]
+#     email:Mapped[str]
+#
+
+
+class Ticket(Base):
+    __tablename__ = "tickets"
+    id: Mapped[UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    event: Mapped[uuid] = mapped_column(
+        ForeignKey("Events.id"), nullable=False
+    )
+    seat: Mapped[str]
+
+    # user: Mapped[int] = mapped_column(ForeignKey('users.id'),nullable=False)

@@ -3,8 +3,9 @@ from datetime import datetime
 from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert
 
-from app.db.models import Event, Place
+from app.db.models import Event, Place, Ticket
 from app.schemas.api import ApiEventGetSchema
+from app.schemas.base import TicketDbSchema
 from app.schemas.client import ClientEventSchema
 from app.settings.db_config import Base, Session
 from app.settings.logs_config import api_logger
@@ -37,7 +38,7 @@ class DbRepository:
             select(Event).where(Event.id == event_id)
         ).one()
         if not event:
-            raise ValueError("Ошибка 404 не найден в базе данных")
+            raise ValueError("404|cобытие не найдено в базе данных")
         return ApiEventGetSchema.model_validate(event)
 
     def _prepare_stmt_to_insert(self, Model: Base, data: list):
@@ -84,3 +85,27 @@ class DbRepository:
             api_logger.error("ошибка загрузки данных  в базу ", type(e), e)
         else:
             return last_updated[0]
+
+    def get_event_by_ticket(self, ticket_id: str) -> str:
+        ticket = self.session.scalars(
+            select(Ticket).where(Ticket.id == ticket_id).limit(1)
+        ).first()
+        if not ticket:
+            raise ValueError("404|Подходящего билета не найдено")
+
+        event_id = ticket.event
+        return event_id
+
+    def load_ticket(self, body: TicketDbSchema):
+        ticket = Ticket(**body.model_dump())
+        self.session.add(ticket)
+        self.session.commit()
+
+    def delete_ticket(self, ticket_id):
+        ticket = self.session.scalars(
+            select(Ticket).where(Ticket.id == ticket_id)
+        ).first()
+        if not ticket:
+            raise ValueError("404|Подходящего билета не найдено")
+        self.session.delete(ticket)
+        self.session.commit()
