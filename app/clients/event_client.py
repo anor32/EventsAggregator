@@ -23,7 +23,7 @@ class EventsProviderClient:
 
     async def fetch_page(self, url) -> dict[Any] | None:
         try:
-            api_logger.info("Начало нового запроса")
+            api_logger.info(f"Начало нового запроса по url{url}")
             async with httpx.AsyncClient() as client:
                 response = await client.get(
                     url=url,
