@@ -8,13 +8,13 @@ from app.schemas.client import (
     EventsProviderResponseSchema as eventsResp,
     SeatsResponseSchema,
 )
-from app.settings.config import EVENTS_API_KEY
+from app.settings.config import CLIENT_HOST, EVENTS_API_KEY
 from app.settings.logs_config import api_logger
 from app.utils import retry_request
 
 
 class EventsProviderClient:
-    _base_url = "http://events-provider.dev-2.python-labs.ru"
+    _base_url = CLIENT_HOST
     _headers = {
         "x-api-key": EVENTS_API_KEY,
         "Content-Type": "application/json",
