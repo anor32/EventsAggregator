@@ -5,7 +5,6 @@ from pydantic import BaseModel, ConfigDict, Field
 from app.schemas.base import (
     EventSchema,
     RegisterEventSchema,
-    UnregisterEventSchema,
 )
 
 
@@ -33,8 +32,16 @@ class EventRegisterPost(RegisterEventSchema):
     id: str
 
 
-class EventDeleteRegister(UnregisterEventSchema):
-    id: UUID
+class ApiSuccessSchema(BaseModel):
+    success: bool
+
+
+class ApiRegisterSchema(BaseModel):
+    ticket_id: str
+
+
+class EventDeleteRegister(RegisterEventSchema):
+    ticket_id: str
 
 
 class ApiGetPagesEvent(BaseModel):

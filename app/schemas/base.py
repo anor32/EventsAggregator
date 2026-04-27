@@ -30,5 +30,9 @@ class RegisterEventSchema(BaseModel):
     seat: str
 
 
-class UnregisterEventSchema(BaseModel):
-    ticket: UUID
+class TicketDbSchema(BaseModel):
+    id: str
+    event: str
+    seat: str
+
+    model_config = ConfigDict(from_attributes=True)
