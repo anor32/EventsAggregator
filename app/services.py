@@ -33,6 +33,7 @@ class EventService:
             raise ValueError(
                 "503|данные не были загружены ошибка внешнего сервиса"
             )
+
         api_logger.info("данные от клиента получены клиента")
         last_client_date = max(event.changed_at for event in resp.results)
         db_last_date = self.db.get_event_last_date_updated()

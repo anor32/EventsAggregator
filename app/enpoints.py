@@ -20,10 +20,18 @@ async def health():
 
 
 @router.post("/api/sync/trigger")
-async def manual_sync(service: EventServiceDep) -> SynchronizeResponseSchema:
+async def manual_sync(
+    service: EventServiceDep,
+) -> SynchronizeResponseSchema | dict[str]:
     api_logger.info("Запуск ручной синхронизации ")
     try:
         resp = await service.sync_db()
+        if not resp:
+            api_logger.error("cинхронизация не выполнена")
+            raise HTTPException(
+                status_code=500,
+                detail="cинхронизация не выполнена ошибка внешнего клиента ",
+            )
         schema = SynchronizeResponseSchema(message=resp["message"])
     except ValueError as e:
         print(e)

@@ -16,6 +16,11 @@ class BackgroundSynchronizer:
         while True:
             api_logger.info(f"Фоновавя синхронизация по дате {date}")
             sync_dict = await self._service.sync_db(date)
+            if not sync_dict:
+                api_logger.error(
+                    "ошибка во время синхронизации повторный запрос "
+                )
+                continue
             date = sync_dict["last_changed_date"]
             api_logger.info("Фоновая синхронизация завершена ")
             await asyncio.sleep(delay * 60 * 60)
