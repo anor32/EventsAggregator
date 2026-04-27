@@ -10,9 +10,11 @@ from app.schemas.api import (
     ApiEventGetSchema,
     ApiEventsSchema,
     ApiGetPagesEvent,
+    ApiRegisterSchema,
+    ApiSuccessSchema,
     EventRegisterPost,
 )
-from app.schemas.base import RegisterEventSchema
+from app.schemas.base import TicketDbSchema
 from app.schemas.client import SeatsResponseSchema
 from app.settings.logs_config import api_logger
 
@@ -78,11 +80,26 @@ class EventService:
         seats = await self.client.get_seats(event_id)
         return seats
 
-    async def registration(self, event_id, body: EventRegisterPost):
+    async def registration(
+        self, event_id, body: EventRegisterPost
+    ) -> ApiRegisterSchema:
         ticket = await self.client.register_to_event(event_id, body)
-        return ticket
+        if ticket:
+            ticket = ticket["ticket_id"]
+            load_schema = TicketDbSchema(
+                id=ticket, event=body.id, seat=body.seat
+            )
+        else:
+            raise ValueError("404| подходящий тикет не найден у клиента ")
+        self.db.load_ticket(load_schema)
 
-    async def un_registration(self, ticket_id, body: RegisterEventSchema):
-        body = body.model_dump()
-        message = await self.client.unregister_to_event(ticket_id, body)
-        return message
+        return ApiRegisterSchema(ticket_id=ticket)
+
+    async def un_registration(self, ticket_id: str) -> ApiSuccessSchema:
+        event_id = self.db.get_event_by_ticket(ticket_id=ticket_id)
+        body = ApiRegisterSchema(ticket_id=ticket_id)
+        message = await self.client.unregister_to_event(event_id, body)
+
+        self.db.delete_ticket(ticket_id=body.ticket_id)
+
+        return ApiSuccessSchema(**message)
