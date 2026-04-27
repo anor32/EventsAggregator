@@ -31,10 +31,13 @@ class EventsProviderClient:
                     follow_redirects=True,
                     timeout=30,
                 )
-                api_logger.info(
-                    f"выполнен запрос к клиенту "
-                    f"{response.status_code} url {response.request.url.path} "
-                )
+                if response.status_code >= 400:
+                    api_logger.info(
+                        f"выполнен запрос к клиенту  c ошибкой "
+                        f"{response.status_code} "
+                        f"url {response.request.url.path}"
+                        f" {response.text}"
+                    )
 
         except TimeoutException as e:
             api_logger.error(f"Превышено время ожидания от клиента {str(e)}")
