@@ -3,6 +3,8 @@ from fastapi import APIRouter, HTTPException, Request
 from app.schemas.api import (
     ApiEventGetSchema,
     ApiEventsSchema,
+    ApiRegisterSchema,
+    ApiSuccessSchema,
     EventRegisterPost,
     SynchronizeResponseSchema,
 )
@@ -26,7 +28,7 @@ async def manual_sync(service: EventServiceDep) -> SynchronizeResponseSchema:
     except ValueError as e:
         print(e)
     except Exception as e:
-        api_logger.error(f"ошибка в эндпоните /api/sync/trigger {str(e)}")
+        api_logger.error(f"ошибка в эндпоните /api/sync/trigger {e}")
         message = "Внутреняя ошибка сервера "
         raise HTTPException(status_code=500, detail=message)
     else:
@@ -46,7 +48,7 @@ async def get_events(
         return {"error": str(e)}
     except Exception as e:
         api_logger.error(f"ошибка в эндпоните /api/events {str(e)}")
-        message = f"Внутреняя ошибка сервера{e}"
+        message = "Внутреняя ошибка сервера"
         raise HTTPException(status_code=500, detail=message)
     else:
         return resp
@@ -64,7 +66,7 @@ async def event_detail(
         raise HTTPException(status_code=int(status), detail=message)
     except Exception as e:
         api_logger.error(e)
-        message = f"Внутреняя ошибка сервера{e}"
+        message = "Внутреняя ошибка сервера"
         raise HTTPException(status_code=500, detail=message)
     else:
         return resp
@@ -80,39 +82,41 @@ async def event_seats(event_id: str, service: EventServiceDep):
         raise HTTPException(status_code=int(status), detail=message)
     except Exception as e:
         api_logger.error(e)
-        message = f"Внутреняя ошибка сервера{e}"
+        message = "Внутреняя ошибка сервера"
         raise HTTPException(status_code=500, detail=message)
     else:
         return resp
 
 
-@router.post("/api/tickets")
-async def event_register(body: EventRegisterPost, service: EventServiceDep):
+@router.post("/api/tickets", status_code=201)
+async def event_register(
+    body: EventRegisterPost, service: EventServiceDep
+) -> ApiRegisterSchema:
     try:
         resp = await service.registration(event_id=body.id, body=body)
     except ValueError as e:
+        api_logger.error(e)
         status, message = str(e).split("|")
-        print("here")
         raise HTTPException(status_code=int(status), detail=message)
     except Exception as e:
         api_logger.error(e)
-        message = f"Внутреняя ошибка сервера{e}"
+        message = "Внутреняя ошибка сервера"
         raise HTTPException(status_code=500, detail=message)
     else:
         return resp
 
 
 @router.delete("/api/tickets/{ticket_id}")
-async def cancel_register(ticket_id, body, service: EventServiceDep):
+async def cancel_register(
+    service: EventServiceDep, ticket_id: str
+) -> ApiSuccessSchema:
     try:
-        resp = service.un_registration(ticket_id=ticket_id, json=body)
+        resp = await service.un_registration(ticket_id)
     except ValueError as e:
         status, message = str(e).split("|")
-        print("here")
         raise HTTPException(status_code=int(status), detail=message)
     except Exception as e:
         api_logger.error(e)
-        message = f"Внутреняя ошибка сервера{e}"
-        raise HTTPException(status_code=500, detail=message)
+        raise HTTPException(status_code=500, detail="Внутреняя ошибка сервера")
     else:
         return resp
