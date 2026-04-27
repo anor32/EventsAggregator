@@ -3,7 +3,7 @@ from typing import Any
 import httpx
 from httpx import TimeoutException
 
-from app.schemas.api import EventRegisterPost
+from app.schemas.api import ApiRegisterSchema, EventRegisterPost
 from app.schemas.client import (
     EventsProviderResponseSchema as eventsResp,
     SeatsResponseSchema,
@@ -85,7 +85,9 @@ class EventsProviderClient:
 
         return SeatsResponseSchema(**response.json())
 
-    async def register_to_event(self, event_id, body: EventRegisterPost):
+    async def register_to_event(
+        self, event_id, body: EventRegisterPost
+    ) -> dict[str]:
         path = f"/api/events/{event_id}/register/"
         body = body.model_dump()
         async with httpx.AsyncClient() as client:
@@ -96,8 +98,10 @@ class EventsProviderClient:
                 json=body,
                 timeout=60,
             )
+            resp = response
             if response.status_code == 308:
                 new_url = response.headers["location"] + "/"
+
                 new_response = await client.post(
                     new_url,
                     headers=self._headers,
@@ -105,11 +109,20 @@ class EventsProviderClient:
                     json=body,
                     timeout=60,
                 )
+                resp = new_response
 
-                return new_response.json()
-        return response.json()
+        if resp.status_code == 200:
+            return resp.json()
+        if resp.status_code >= 400:
+            raise ValueError(
+                f"{resp.status_code}|Ошибка"
+                f" во время отправки запроса {resp.text}"
+            )
+        else:
+            return resp.json()
 
-    async def unregister_to_event(self, event_id, body: dict[str, Any]):
+    async def unregister_to_event(self, event_id, body: ApiRegisterSchema):
+        body = body.model_dump()
         path = f"/api/events/{event_id}/unregister/"
         async with httpx.AsyncClient() as client:
             response = await client.request(
@@ -120,4 +133,16 @@ class EventsProviderClient:
                 follow_redirects=True,
                 timeout=60,
             )
+
+            if response.status_code == 404:
+                raise ValueError("404|не найден билет у клиента ")
+            elif response.status_code == 400:
+                raise ValueError(
+                    f"400| Неверный запрос к клиенту {response.text}"
+                )
+            elif response.status_code > 404:
+                raise ValueError(
+                    f"{response.status_code}|Ошибка"
+                    f" во время запроса к клиенту "
+                )
             return response.json()
