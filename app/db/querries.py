@@ -4,6 +4,7 @@ from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert
 
 from app.db.models import Event, Place, Ticket
+from app.exceptions import ObjectNotFound
 from app.schemas.api import ApiEventGetSchema
 from app.schemas.base import TicketDbSchema
 from app.schemas.client import ClientEventSchema
@@ -35,10 +36,13 @@ class DbRepository:
 
     def get_event(self, event_id) -> ApiEventGetSchema | str:
         event = self.session.scalars(
-            select(Event).where(Event.id == event_id)
-        ).one()
+            select(Event)
+            .where(Event.id == event_id)
+            .where(Event.status == "published")
+        ).first()
+
         if not event:
-            raise ValueError("404|cобытие не найдено в базе данных")
+            raise ObjectNotFound("Событие не найдено в базе данных")
         return ApiEventGetSchema.model_validate(event)
 
     def _prepare_stmt_to_insert(self, Model: Base, data: list):
