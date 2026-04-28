@@ -3,6 +3,7 @@ from typing import Any
 import httpx
 from httpx import TimeoutException
 
+from app.exceptions import ClientServerError, ObjectNotFound, WrongRequest
 from app.schemas.api import ApiRegisterSchema, EventRegisterPost
 from app.schemas.client import (
     EventsProviderResponseSchema as eventsResp,
@@ -39,22 +40,24 @@ class EventsProviderClient:
                         f" {response.text}"
                     )
 
-        except TimeoutException as e:
-            api_logger.error(f"Превышено время ожидания от клиента {str(e)}")
-            return None
+        except TimeoutException:
+            api_logger.error("Превышено время ожидания от клиента ")
+            raise ClientServerError("Таймаут при запросе к клиенту", 504)
         except httpx.ConnectError as e:
             api_logger.error(f"Ошибка подключения к {url}: {e}")
-            return None
+            raise ClientServerError(
+                f"Не удалось подключиться к клиенту: {e}", 503
+            )
         except httpx.HTTPStatusError as e:
             api_logger.error(
                 f"HTTP ошибка {e.response.status_code} при запросе к {url}"
             )
-            return None
+            raise WrongRequest("Ошибка неправильный запрос к клиенту")
         except Exception as e:
             api_logger.error(
                 f"Неизвестная ошибка при запросе к {url}: {type(e)}: {e}"
             )
-            return None
+            raise Exception(e)
         else:
             return response.json()
 
@@ -82,12 +85,14 @@ class EventsProviderClient:
                 timeout=10,
             )
 
-            if response.status_code > 404:
+            if response.status_code > 399:
                 response = await retry_request(
                     client, response.request, max_retry=3, delay=1
                 )
 
-        return SeatsResponseSchema(**response.json())
+        return SeatsResponseSchema(
+            event_id=event_id, seats=response.json()["seats"]
+        )
 
     async def register_to_event(
         self, event_id, body: EventRegisterPost
@@ -115,17 +120,15 @@ class EventsProviderClient:
                 )
                 resp = new_response
 
-        if resp.status_code == 200:
+        if resp.is_success:
             return resp.json()
-        if resp.status_code >= 400:
-            raise ValueError(
-                f"{resp.status_code}|Ошибка"
-                f" во время отправки запроса {resp.text}"
-            )
-        else:
+        elif resp.status_code >= 400:
+            resp = await retry_request(client=client, request=resp.request)
             return resp.json()
 
-    async def unregister_to_event(self, event_id, body: ApiRegisterSchema):
+    async def unregister_to_event(
+        self, event_id, body: ApiRegisterSchema
+    ) -> dict[str]:
         body = body.model_dump()
         path = f"/api/events/{event_id}/unregister/"
         async with httpx.AsyncClient() as client:
@@ -138,15 +141,16 @@ class EventsProviderClient:
                 timeout=60,
             )
 
+            if response.is_success:
+                return response.json()
             if response.status_code == 404:
-                raise ValueError("404|не найден билет у клиента ")
+                raise ObjectNotFound("не найден билет у клиента ")
             elif response.status_code == 400:
-                raise ValueError(
-                    f"400| Неверный запрос к клиенту {response.text}"
+                raise WrongRequest(
+                    f" Неверный запрос к клиенту {response.text}"
                 )
-            elif response.status_code > 404:
-                raise ValueError(
-                    f"{response.status_code}|Ошибка"
-                    f" во время запроса к клиенту "
+            elif response.status_code > 400:
+                response = await retry_request(
+                    client=client, request=response.request
                 )
-            return response.json()
+                return response.json()
