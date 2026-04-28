@@ -25,13 +25,14 @@ async def test_05_get_event(client, event_id):
     response = await client.get(f'/api/events/{event_id}')
     assert response.status_code == 200
     assert response.json().get('event_time')
-
-
+    response = await client.get(f'/api/events/007d362c-6c9d-4293-9f83-4f741de0147f')
+    assert response.status_code == 404
 @pytest.mark.asyncio
 async def test_06_get_seats(client, event_id):
     response = await client.get(f'/api/events/{event_id}/seats')
     assert response.status_code == 200
-    assert response.json().get('seats')
+    assert response.json().get('available_seats')
+    assert response.json().get('event_id')
 
 
 
