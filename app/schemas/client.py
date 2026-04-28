@@ -14,7 +14,7 @@ class ClientEventSchema(EventSchema):
 
 
 class SeatsResponseSchema(BaseModel):
-    seats: list[str]
+    available_seats: list[str]
     event_id: str
 
 
