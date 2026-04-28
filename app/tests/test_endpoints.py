@@ -31,8 +31,8 @@ async def test_05_get_event(client, event_id):
 async def test_06_get_seats(client, event_id):
     response = await client.get(f'/api/events/{event_id}/seats')
     assert response.status_code == 200
-    if response.status_code ==200:
-        assert  response.json().get('seats')
+    assert response.json().get('seats')
+
 
 
 
