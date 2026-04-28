@@ -91,7 +91,7 @@ class EventsProviderClient:
                 )
 
         return SeatsResponseSchema(
-            event_id=event_id, seats=response.json()["seats"]
+            event_id=event_id, available_seats=response.json()["seats"]
         )
 
     async def register_to_event(
