@@ -18,7 +18,7 @@ class DbRepository:
 
     def get_events_count(self, date_from) -> int:
         stmt = select(func.count()).select_from(Event)
-        stmt = stmt.where(Event.changed_at >= date_from)
+        stmt = stmt.where(Event.event_time >= date_from)
         return self.session.scalar(stmt) or 0
 
     def get_all_events(
@@ -74,7 +74,7 @@ class DbRepository:
         self.session.execute(e_stmt)
         self.session.commit()
 
-        return {"msg": "success added"}
+        return {"message": "success"}
 
     def get_event_last_date_updated(self):
         try:
