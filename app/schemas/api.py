@@ -32,12 +32,14 @@ class EventRegisterPost(RegisterEventSchema):
     id: str
 
 
-class ApiSuccessSchema(BaseModel):
+class ApiUnregisterSchema(BaseModel):
     success: bool
+    available_seats: list[str]
 
 
 class ApiRegisterSchema(BaseModel):
     ticket_id: str
+    available_seats: list[str]
 
 
 class EventDeleteRegister(RegisterEventSchema):

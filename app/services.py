@@ -1,17 +1,19 @@
 from datetime import datetime
 from uuid import UUID
 
+from cachetools import TTLCache
 from fastapi import Request
 
 from app.clients.event_client import EventsProviderClient
 from app.db.querries import DbRepository
+from app.exceptions import ClientServerError, ObjectNotFound
 from app.paginators import ApiPaginator
 from app.schemas.api import (
     ApiEventGetSchema,
     ApiEventsSchema,
     ApiGetPagesEvent,
     ApiRegisterSchema,
-    ApiSuccessSchema,
+    ApiUnregisterSchema,
     EventRegisterPost,
 )
 from app.schemas.base import TicketDbSchema
@@ -23,6 +25,7 @@ class EventService:
     def __init__(self, db: DbRepository, client: EventsProviderClient):
         self.client = client
         self.db = db
+        self._seats_cache = TTLCache(maxsize=100, ttl=30)
 
     async def sync_db(self, date: str | datetime = "2000-01-01") -> dict:
         api_logger.info("Получение данных от клиента")
@@ -30,11 +33,12 @@ class EventService:
             date = date.strftime("%Y-%m-%d")
         resp = await self.client.get_pages(date=date)
         if not resp:
-            raise ValueError(
-                "503|данные не были загружены ошибка внешнего сервиса"
+            raise ClientServerError(
+                "данные не были загружены ошибка внешнего сервиса",
+                status_code=503,
             )
 
-        api_logger.info("данные от клиента получены клиента")
+        api_logger.info("данные от клиента получены")
         last_client_date = max(event.changed_at for event in resp.results)
         db_last_date = self.db.get_event_last_date_updated()
         last_client_date = last_client_date.replace(tzinfo=None)
@@ -78,7 +82,15 @@ class EventService:
         return self.db.get_event(event_id)
 
     async def get_available_seats(self, event_id) -> SeatsResponseSchema:
+        if self._seats_cache and event_id in self._seats_cache:
+            return SeatsResponseSchema(
+                event_id=event_id, available_seats=self._seats_cache[event_id]
+            )
         seats = await self.client.get_seats(event_id)
+
+        if self._seats_cache:
+            self._seats_cache[event_id] = seats.available_seats
+
         return seats
 
     async def registration(
@@ -91,16 +103,28 @@ class EventService:
                 id=ticket, event=body.id, seat=body.seat
             )
         else:
-            raise ValueError("404| подходящий тикет не найден у клиента ")
+            raise ObjectNotFound("подходящий тикет не найден у клиента ")
         self.db.load_ticket(load_schema)
+        if self._seats_cache:
+            available_seats = self._seats_cache[event_id]
+        else:
+            seats = await self.client.get_seats(event_id)
+            available_seats = seats.available_seats
+        return ApiRegisterSchema(
+            ticket_id=ticket, available_seats=available_seats
+        )
 
-        return ApiRegisterSchema(ticket_id=ticket)
-
-    async def un_registration(self, ticket_id: str) -> ApiSuccessSchema:
+    async def un_registration(self, ticket_id: str) -> ApiUnregisterSchema:
         event_id = self.db.get_event_by_ticket(ticket_id=ticket_id)
         body = ApiRegisterSchema(ticket_id=ticket_id)
         message = await self.client.unregister_to_event(event_id, body)
 
         self.db.delete_ticket(ticket_id=body.ticket_id)
-
-        return ApiSuccessSchema(**message)
+        if self._seats_cache:
+            available_seats = self._seats_cache[event_id]
+        else:
+            seats = await self.client.get_seats(event_id)
+            available_seats = seats.available_seats
+        return ApiUnregisterSchema(
+            message=message.get("message"), available_seats=available_seats
+        )
