@@ -4,7 +4,7 @@ from app.schemas.api import (
     ApiEventGetSchema,
     ApiEventsSchema,
     ApiRegisterSchema,
-    ApiSuccessSchema,
+    ApiUnregisterSchema,
     EventRegisterPost,
     SynchronizeResponseSchema,
 )
@@ -72,7 +72,7 @@ async def event_register(
 @router.delete("/api/tickets/{ticket_id}")
 async def cancel_register(
     service: EventServiceDep, ticket_id: str
-) -> ApiSuccessSchema:
+) -> ApiUnregisterSchema:
     resp = await service.un_registration(ticket_id)
 
     return resp
