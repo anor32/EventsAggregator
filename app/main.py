@@ -7,6 +7,7 @@ from app.synchronizers import BackgroundSynchronizer
 from .clients.event_client import EventsProviderClient
 from .db.querries import DbRepository
 from .enpoints import router
+from .midleware import ErrorHandlingMiddleware
 from .services import EventService
 from .settings.db_config import Session
 
@@ -25,4 +26,6 @@ def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+app.add_middleware(ErrorHandlingMiddleware)
+
 app.include_router(router)
