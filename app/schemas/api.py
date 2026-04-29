@@ -29,7 +29,7 @@ class ApiEventsSchema(BaseModel):
 
 
 class EventRegisterPost(RegisterEventSchema):
-    id: str
+    event_id: str
 
 
 class ApiUnregisterSchema(BaseModel):
