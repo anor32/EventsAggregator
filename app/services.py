@@ -16,7 +16,7 @@ from app.schemas.api import (
     ApiUnregisterSchema,
     EventRegisterPost,
 )
-from app.schemas.base import TicketDbSchema
+from app.schemas.base import EventDeleteRegister, TicketDbSchema
 from app.schemas.client import SeatsResponseSchema
 from app.settings.logs_config import api_logger
 
@@ -60,6 +60,14 @@ class EventService:
                 "last_changed_date": last_client_date,
             }
 
+    async def _get_from_cache_seats(self, event_id):
+        if self._seats_cache and event_id in self._seats_cache:
+            available_seats = self._seats_cache[event_id]
+        else:
+            seats = await self.client.get_seats(event_id)
+            available_seats = seats.available_seats
+        return available_seats
+
     async def get_events(
         self, data: ApiGetPagesEvent, request: Request
     ) -> ApiEventsSchema:
@@ -100,31 +108,24 @@ class EventService:
         if ticket:
             ticket = ticket["ticket_id"]
             load_schema = TicketDbSchema(
-                id=ticket, event=body.id, seat=body.seat
+                id=ticket, event=body.event_id, seat=body.seat
             )
         else:
             raise ObjectNotFound("подходящий тикет не найден у клиента ")
         self.db.load_ticket(load_schema)
-        if self._seats_cache:
-            available_seats = self._seats_cache[event_id]
-        else:
-            seats = await self.client.get_seats(event_id)
-            available_seats = seats.available_seats
+        available_seats = await self._get_from_cache_seats(event_id)
         return ApiRegisterSchema(
             ticket_id=ticket, available_seats=available_seats
         )
 
     async def un_registration(self, ticket_id: str) -> ApiUnregisterSchema:
         event_id = self.db.get_event_by_ticket(ticket_id=ticket_id)
-        body = ApiRegisterSchema(ticket_id=ticket_id)
-        message = await self.client.unregister_to_event(event_id, body)
+        body = EventDeleteRegister(ticket_id=ticket_id)
+        message = await self.client.unregister_to_event(str(event_id), body)
+        api_logger.info(f"{ticket_id} sadsa")
+        self.db.delete_ticket(ticket_id=ticket_id)
+        available_seats = await self._get_from_cache_seats(str(event_id))
 
-        self.db.delete_ticket(ticket_id=body.ticket_id)
-        if self._seats_cache:
-            available_seats = self._seats_cache[event_id]
-        else:
-            seats = await self.client.get_seats(event_id)
-            available_seats = seats.available_seats
         return ApiUnregisterSchema(
-            message=message.get("message"), available_seats=available_seats
+            success=message.get("success"), available_seats=available_seats
         )
