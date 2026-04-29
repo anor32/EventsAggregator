@@ -23,6 +23,10 @@ class EventSchema(BaseModel):
     number_of_visitors: int
 
 
+class EventDeleteRegister(BaseModel):
+    ticket_id: str
+
+
 class RegisterEventSchema(BaseModel):
     first_name: str
     last_name: str

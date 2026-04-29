@@ -42,10 +42,6 @@ class ApiRegisterSchema(BaseModel):
     available_seats: list[str]
 
 
-class EventDeleteRegister(RegisterEventSchema):
-    ticket_id: str
-
-
 class ApiGetPagesEvent(BaseModel):
     page: int | None = Field(1, ge=1)
     page_size: int | None = 20
