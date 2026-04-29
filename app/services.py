@@ -2,7 +2,6 @@ from datetime import datetime
 from uuid import UUID
 
 from cachetools import TTLCache
-from fastapi import Request
 
 from app.clients.event_client import EventsProviderClient
 from app.core.exceptions import ClientServerError, ObjectNotFound
@@ -69,7 +68,7 @@ class EventService:
         return available_seats
 
     async def get_events(
-        self, data: ApiGetPagesEvent, request: Request
+        self, data: ApiGetPagesEvent, base_url: str
     ) -> ApiEventsSchema:
         events = self.db.get_all_events(
             data.page, data.page_size, data.date_from
@@ -77,7 +76,7 @@ class EventService:
         count = self.db.get_events_count(date_from=data.date_from)
         path = "/api/events"
         paginator = ApiPaginator(
-            count, path, request, page=data.page - 1, page_size=data.page_size
+            count, path, base_url, page=data.page - 1, page_size=data.page_size
         )
         next_url = paginator.get_next_url()
         previous_url = paginator.get_previous_url()

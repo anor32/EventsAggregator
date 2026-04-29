@@ -1,18 +1,16 @@
 from urllib.parse import urlencode
 
-from fastapi import Request
-
 
 class ApiPaginator:
     def __init__(
         self,
         count_objects: int,
         path: str,
-        request: Request,
+        base_url: str,
         page=1,
         page_size=20,
     ):
-        self._base_url = str(request.base_url).rstrip("/")
+        self._base_url = base_url
         self.page = page
         self.page_size = page_size
         self._next_url = ""

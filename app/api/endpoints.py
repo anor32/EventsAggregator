@@ -37,7 +37,7 @@ async def get_events(
     service: EventServiceDep,
     request: Request,
 ) -> ApiEventsSchema:
-    resp = await service.get_events(data, request=request)
+    resp = await service.get_events(data, base_url=request.base_url)
 
     return resp
 
