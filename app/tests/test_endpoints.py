@@ -40,8 +40,8 @@ async def test_06_get_seats(client, event_id):
 @pytest.mark.asyncio
 async def test_07_register_unregister(client,register_user,event_id):
     response = await client.get(f'/api/events/{event_id}/seats')
-
-    seat = response.json()['seats'][0]
+    assert response.status_code == 200
+    seat = response.json()['available_seats'][0]
     register_user.seat = seat
     response = await client.post(f'/api/tickets',json=register_user.model_dump(mode='json'))
 
