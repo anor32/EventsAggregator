@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Request
 
+from app.api.dependecies import EventServiceDep, PagesSchema
 from app.schemas.api import (
     ApiEventGetSchema,
     ApiEventsSchema,
@@ -9,7 +10,6 @@ from app.schemas.api import (
     SynchronizeResponseSchema,
 )
 from app.schemas.client import SeatsResponseSchema
-from app.schemas.dependecies import EventServiceDep, PagesSchema
 from app.settings.logs_config import api_logger
 
 router = APIRouter()

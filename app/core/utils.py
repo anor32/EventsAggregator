@@ -4,8 +4,8 @@ from collections.abc import Callable
 from fastapi import HTTPException
 from httpx import AsyncClient, Request, Response
 
-from app.exceptions import ClientServerError, ObjectNotFound, WrongRequest
 from app.settings.logs_config import api_logger
+from app.сore.exceptions import ClientServerError, ObjectNotFound, WrongRequest
 
 
 async def retry_request(

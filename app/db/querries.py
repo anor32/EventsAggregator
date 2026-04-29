@@ -4,12 +4,12 @@ from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert
 
 from app.db.models import Event, Place, Ticket
-from app.exceptions import ObjectNotFound
 from app.schemas.api import ApiEventGetSchema
 from app.schemas.base import TicketDbSchema
 from app.schemas.client import ClientEventSchema
 from app.settings.db_config import Base, Session
 from app.settings.logs_config import api_logger
+from app.сore.exceptions import ObjectNotFound
 
 
 class DbRepository:

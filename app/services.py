@@ -6,8 +6,6 @@ from fastapi import Request
 
 from app.clients.event_client import EventsProviderClient
 from app.db.querries import DbRepository
-from app.exceptions import ClientServerError, ObjectNotFound
-from app.paginators import ApiPaginator
 from app.schemas.api import (
     ApiEventGetSchema,
     ApiEventsSchema,
@@ -19,6 +17,8 @@ from app.schemas.api import (
 from app.schemas.base import EventDeleteRegister, TicketDbSchema
 from app.schemas.client import SeatsResponseSchema
 from app.settings.logs_config import api_logger
+from app.сore.exceptions import ClientServerError, ObjectNotFound
+from app.сore.paginators import ApiPaginator
 
 
 class EventService:
