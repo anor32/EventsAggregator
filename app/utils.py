@@ -29,7 +29,9 @@ async def retry_request(
             "Ошибка запрашиваемые данные от клиента не найдены "
         )
     elif response.status_code == 400:
-        raise WrongRequest("Ошибка неправильный запрос клиента", 400)
+        raise WrongRequest(
+            f"Ошибка неправильный запрос клиента {response.text}", 400
+        )
 
 
 def default_endpoint_exception(func: Callable):
