@@ -4,7 +4,8 @@ import httpx
 from httpx import TimeoutException
 
 from app.exceptions import ClientServerError, ObjectNotFound, WrongRequest
-from app.schemas.api import ApiRegisterSchema, EventRegisterPost
+from app.schemas.api import EventRegisterPost
+from app.schemas.base import EventDeleteRegister
 from app.schemas.client import (
     EventsProviderResponseSchema as eventsResp,
     SeatsResponseSchema,
@@ -120,15 +121,15 @@ class EventsProviderClient:
                 )
                 resp = new_response
 
-        if resp.is_success:
-            return resp.json()
-        elif resp.status_code >= 400:
-            resp = await retry_request(client=client, request=resp.request)
-            return resp.json()
+            if resp.is_success:
+                return resp.json()
+            elif resp.status_code >= 400:
+                resp = await retry_request(client=client, request=resp.request)
+                return resp.json()
 
     async def unregister_to_event(
-        self, event_id, body: ApiRegisterSchema
-    ) -> dict[str]:
+        self, event_id, body: EventDeleteRegister
+    ) -> dict[str, bool]:
         body = body.model_dump()
         path = f"/api/events/{event_id}/unregister/"
         async with httpx.AsyncClient() as client:
@@ -142,7 +143,7 @@ class EventsProviderClient:
             )
 
             if response.is_success:
-                return response.json()
+                return {"success": True}
             if response.status_code == 404:
                 raise ObjectNotFound("не найден билет у клиента ")
             elif response.status_code == 400:
