@@ -1,9 +1,8 @@
-from typing import Any
-
 import httpx
 from httpx import TimeoutException
 
 from app.core.exceptions import ClientServerError, ObjectNotFound, WrongRequest
+from app.core.paginators import ClientEventsPaginator
 from app.core.utils import retry_request
 from app.schemas.api import EventRegisterPost
 from app.schemas.base import EventDeleteRegister
@@ -23,59 +22,37 @@ class EventsProviderClient:
         "Accept": "application/json",
     }
 
-    async def fetch_page(self, url) -> dict[Any] | None:
-        try:
-            api_logger.info(f"Начало нового запроса по url{url}")
-            async with httpx.AsyncClient() as client:
-                response = await client.get(
-                    url=url,
-                    headers=self._headers,
-                    follow_redirects=True,
-                    timeout=30,
-                )
-                if response.status_code >= 400:
-                    api_logger.info(
-                        f"выполнен запрос к клиенту  c ошибкой "
-                        f"{response.status_code} "
-                        f"url {response.request.url.path}"
-                        f" {response.text}"
-                    )
-
-        except TimeoutException:
-            api_logger.error("Превышено время ожидания от клиента ")
-            raise ClientServerError("Таймаут при запросе к клиенту", 504)
-        except httpx.ConnectError as e:
-            api_logger.error(f"Ошибка подключения к {url}: {e}")
-            raise ClientServerError(
-                f"Не удалось подключиться к клиенту: {e}", 503
-            )
-        except httpx.HTTPStatusError as e:
-            api_logger.error(
-                f"HTTP ошибка {e.response.status_code} при запросе к {url}"
-            )
-            raise WrongRequest("Ошибка неправильный запрос к клиенту")
-        except Exception as e:
-            api_logger.error(
-                f"Неизвестная ошибка при запросе к {url}: {type(e)}: {e}"
-            )
-            raise Exception(e)
-        if response.is_success:
-            return response.json()
-        else:
-            message = f"ошибка синхронизации{response.text}"
-            api_logger.error(message)
-            raise ClientServerError(message)
-
     async def get_pages(self, date) -> eventsResp | None:
         url = self._base_url + f"/api/events/?changed_at={date}"
-        response = await self.fetch_page(url)
         results = []
-
-        results.extend(response["results"])
-        while response["next"]:
-            url = response["next"]
-            response = await self.fetch_page(url)
-            results.extend(response["results"])
+        async with httpx.AsyncClient() as client:
+            paginator = ClientEventsPaginator(url, client, self._headers)
+            try:
+                async for response in paginator:
+                    if response.is_success:
+                        results.extend(response.json()["results"])
+                    elif response.status_code >= 400:
+                        message = f"ошибка синхронизации{response.text}"
+                        api_logger.error(message)
+                        raise ClientServerError(message)
+            except TimeoutException:
+                api_logger.error("Превышено время ожидания от клиента ")
+                raise ClientServerError("Таймаут при запросе к клиенту", 504)
+            except httpx.ConnectError as e:
+                api_logger.error(f"Ошибка подключения к {url}: {e}")
+                raise ClientServerError(
+                    f"Не удалось подключиться к клиенту: {e}", 503
+                )
+            except httpx.HTTPStatusError as e:
+                api_logger.error(
+                    f"HTTP ошибка {e.response.status_code} при запросе к {url}"
+                )
+                raise WrongRequest("Ошибка неправильный запрос к клиенту")
+            except Exception as e:
+                api_logger.error(
+                    f"Неизвестная ошибка при запросе к {url}: {type(e)}: {e}"
+                )
+                raise Exception(e)
 
         return eventsResp(results=results)
 

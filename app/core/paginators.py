@@ -1,5 +1,7 @@
 from urllib.parse import urlencode
 
+from httpx import AsyncClient, Response
+
 
 class ApiPaginator:
     def __init__(
@@ -34,3 +36,31 @@ class ApiPaginator:
         query = urlencode(params)
         self.previous_url = f"{self._base_url}{self.path}?{query}"
         return self.previous_url
+
+
+class ClientEventsPaginator:
+    def __init__(
+        self,
+        url: str,
+        client: AsyncClient,
+        headers: dict,
+    ):
+        self.headers = headers
+        self.client = client
+        self.url = url
+
+    def __aiter__(self):
+        return self
+
+    async def __anext__(self) -> Response | None:
+        if not self.url:
+            raise StopAsyncIteration
+        response = await self.client.get(
+            url=self.url, headers=self.headers, follow_redirects=True
+        )
+        if response.json().get("next"):
+            self.url = response.json().get("next")
+        else:
+            self.url = None
+
+        return response
