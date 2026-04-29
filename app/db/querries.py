@@ -27,7 +27,11 @@ class DbRepository:
         if not date_from:
             date_from = datetime.now()
         offset = (page - 1) * page_size
-        stmt = select(Event).where(Event.event_time >= date_from)
+        stmt = (
+            select(Event)
+            .where(Event.event_time >= date_from)
+            .where(Event.status == "published")
+        )
         stmt = stmt.offset(offset).limit(page_size)
         events = self.session.scalars(stmt).all()
         results = [ApiEventGetSchema.model_validate(event) for event in events]
@@ -36,9 +40,7 @@ class DbRepository:
 
     def get_event(self, event_id) -> ApiEventGetSchema | str:
         event = self.session.scalars(
-            select(Event)
-            .where(Event.id == event_id)
-            .where(Event.status == "published")
+            select(Event).where(Event.id == event_id)
         ).first()
 
         if not event:
@@ -91,11 +93,13 @@ class DbRepository:
             return last_updated[0]
 
     def get_event_by_ticket(self, ticket_id: str) -> str:
+        print(ticket_id)
         ticket = self.session.scalars(
-            select(Ticket).where(Ticket.id == ticket_id).limit(1)
+            select(Ticket).where(Ticket.id == ticket_id)
         ).first()
+
         if not ticket:
-            raise ValueError("404|Подходящего билета не найдено")
+            raise ObjectNotFound("Подходящего cобтытия по билету не найдено")
 
         event_id = ticket.event
         return event_id
@@ -110,6 +114,6 @@ class DbRepository:
             select(Ticket).where(Ticket.id == ticket_id)
         ).first()
         if not ticket:
-            raise ValueError("404|Подходящего билета не найдено")
+            raise ObjectNotFound("Подходящего билета не найдено")
         self.session.delete(ticket)
         self.session.commit()
