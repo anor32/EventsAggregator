@@ -59,16 +59,19 @@ class EventsProviderClient:
                 f"Неизвестная ошибка при запросе к {url}: {type(e)}: {e}"
             )
             raise Exception(e)
-        else:
+        if response.is_success:
             return response.json()
+        else:
+            message = f"ошибка синхронизации{response.text}"
+            api_logger.error(message)
+            raise ClientServerError(message)
 
     async def get_pages(self, date) -> eventsResp | None:
         url = self._base_url + f"/api/events/?changed_at={date}"
         response = await self.fetch_page(url)
         results = []
-        if not response:
-            api_logger.error("Запрос не был выполнен синхронизация неудалась")
-            return
+
+        results.extend(response["results"])
         while response["next"]:
             url = response["next"]
             response = await self.fetch_page(url)
