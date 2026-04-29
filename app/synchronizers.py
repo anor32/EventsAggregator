@@ -9,7 +9,7 @@ class BackgroundSynchronizer:
         self._service = service
 
     async def synchronize(self, delay=24, date=None):
-        print("Начат процесс синхронизации")
+        api_logger.info("Начат процесс синхронизации")
         if date is None:
             date = "2000-01-01"
 
