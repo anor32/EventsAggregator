@@ -64,7 +64,7 @@ async def event_seats(
 async def event_register(
     body: EventRegisterPost, service: EventServiceDep
 ) -> ApiRegisterSchema:
-    resp = await service.registration(event_id=body.id, body=body)
+    resp = await service.registration(event_id=body.event_id, body=body)
 
     return resp
 
