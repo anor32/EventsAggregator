@@ -3,6 +3,8 @@ from typing import Any
 import httpx
 from httpx import TimeoutException
 
+from app.core.exceptions import ClientServerError, ObjectNotFound, WrongRequest
+from app.core.utils import retry_request
 from app.schemas.api import EventRegisterPost
 from app.schemas.base import EventDeleteRegister
 from app.schemas.client import (
@@ -11,8 +13,6 @@ from app.schemas.client import (
 )
 from app.settings.config import CLIENT_HOST, EVENTS_API_KEY
 from app.settings.logs_config import api_logger
-from app.сore.exceptions import ClientServerError, ObjectNotFound, WrongRequest
-from app.сore.utils import retry_request
 
 
 class EventsProviderClient:

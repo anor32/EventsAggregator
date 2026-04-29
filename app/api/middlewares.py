@@ -2,8 +2,8 @@ from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
 
+from app.core.exceptions import ClientServerError, ObjectNotFound, WrongRequest
 from app.settings.logs_config import api_logger
-from app.сore.exceptions import ClientServerError, ObjectNotFound, WrongRequest
 
 
 class ErrorHandlingMiddleware(BaseHTTPMiddleware):

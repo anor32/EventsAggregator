@@ -2,11 +2,10 @@ import asyncio
 
 from fastapi import FastAPI
 
-from app.api.enpoints import router
-from app.api.midleware import ErrorHandlingMiddleware
-from app.сore.synchronizers import BackgroundSynchronizer
-
+from .api.endpoints import router
+from .api.middlewares import ErrorHandlingMiddleware
 from .clients.event_client import EventsProviderClient
+from .core.synchronizers import BackgroundSynchronizer
 from .db.querries import DbRepository
 from .services import EventService
 from .settings.db_config import Session
