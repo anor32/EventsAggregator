@@ -7,7 +7,7 @@ from app.core.utils import retry_request
 from app.schemas.api import EventRegisterPost
 from app.schemas.base import EventDeleteRegister
 from app.schemas.client import (
-    EventsProviderResponseSchema as eventsResp,
+    EventsResponseSchema as eventsResp,
     SeatsResponseSchema,
 )
 from app.settings.config import CLIENT_HOST, EVENTS_API_KEY

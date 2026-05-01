@@ -18,7 +18,7 @@ class SeatsResponseSchema(BaseModel):
     event_id: str
 
 
-class EventsProviderResponseSchema(BaseModel):
+class EventsResponseSchema(BaseModel):
     results: list[ClientEventSchema]
 
     model_config = ConfigDict(from_attributes=True)
