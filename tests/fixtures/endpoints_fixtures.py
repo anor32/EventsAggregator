@@ -1,0 +1,59 @@
+import pytest
+from unittest.mock import AsyncMock, MagicMock
+from uuid import uuid4
+
+import pytest_asyncio
+from httpx import AsyncClient, ASGITransport
+from app.main import app
+from app.schemas.api import EventRegisterPost, ApiGetPagesEvent
+from app.schemas.base import EventDeleteRegister
+from app.clients.event_client import EventsProviderClient
+
+
+@pytest_asyncio.fixture
+async def client():
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        yield ac
+
+
+@pytest_asyncio.fixture
+async def event_id():
+    return '007d362c-6c9d-4293-9f83-4f741de0056f'
+
+
+@pytest_asyncio.fixture
+async def pages_body():
+    return ApiGetPagesEvent(page=1, page_size=20, date_from='2001-01-01')
+
+
+@pytest_asyncio.fixture
+async def register_user(event_id):
+    data = {
+        "event_id": '007d362c-6c9d-4293-9f83-4f741de0056f',
+        "first_name": "Иван",
+        "last_name": "Иванов",
+        "email": "ivan@example20.com",
+        "seat": "B40"
+    }
+    return EventRegisterPost(**data)
+
+
+@pytest.fixture
+def unregister_body():
+    return EventDeleteRegister(ticket_id="ticket-123")
+
+
+@pytest.fixture
+def client_instance():
+    return EventsProviderClient()
+
+
+@pytest.fixture
+def register_body():
+    return EventRegisterPost(
+        event_id="event-123",
+        first_name="Иван",
+        last_name="Иванов",
+        email="ivan@example.com",
+        seat="A1"
+    )
