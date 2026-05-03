@@ -2,7 +2,7 @@ venv/
 .idea/
 .env
 *.pyc
-__pycashe__/
+__pycache__/
 *.log
 /debug.log
 .kube/
