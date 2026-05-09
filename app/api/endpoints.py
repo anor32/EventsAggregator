@@ -24,7 +24,7 @@ async def health():
 async def manual_sync(
     service: EventServiceDep,
 ) -> SynchronizeResponseSchema:
-    api_logger.info("Запуск ручной синхронизации ")
+    api_logger.info("Запуск ручной синхронизации")
     resp = await service.sync_db()
     schema = SynchronizeResponseSchema(message=resp["message"])
 

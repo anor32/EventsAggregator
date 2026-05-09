@@ -50,10 +50,10 @@ class EventService:
             return db_response
         else:
             api_logger.info(
-                f"cинхронизация по дате {date} не "
-                f"требуется в базе данные от {last_client_date},"
+                "синхронизация по дате %s не требуется в базе данные от %s",
+                date,
+                last_client_date,
             )
-
             return {
                 "message": "success",
                 "last_changed_date": last_client_date,

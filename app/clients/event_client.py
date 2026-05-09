@@ -32,25 +32,33 @@ class EventsProviderClient:
                     if response.is_success:
                         results.extend(response.json()["results"])
                     elif response.status_code >= 400:
-                        message = f"ошибка синхронизации{response.text}"
-                        api_logger.error(message)
-                        raise ClientServerError(message)
+                        api_logger.error(
+                            "ошибка синхронизации %s", response.text
+                        )
+                        raise ClientServerError(
+                            f"ошибка синхронизации {response.text}"
+                        )
             except TimeoutException:
                 api_logger.error("Превышено время ожидания от клиента ")
                 raise ClientServerError("Таймаут при запросе к клиенту", 504)
             except httpx.ConnectError as e:
-                api_logger.error(f"Ошибка подключения к {url}: {e}")
+                api_logger.error("Ошибка подключения к %s: %s", url, e)
                 raise ClientServerError(
                     f"Не удалось подключиться к клиенту: {e}", 503
                 )
             except httpx.HTTPStatusError as e:
                 api_logger.error(
-                    f"HTTP ошибка {e.response.status_code} при запросе к {url}"
+                    "HTTP ошибка %s при запросе к %s",
+                    e.response.status_code,
+                    url,
                 )
                 raise WrongRequest("Ошибка неправильный запрос к клиенту")
             except Exception as e:
                 api_logger.error(
-                    f"Неизвестная ошибка при запросе к {url}: {type(e)}: {e}"
+                    "Неизвестная ошибка при запросе к %s: %s: %s",
+                    url,
+                    type(e),
+                    e,
                 )
                 raise Exception(e)
 
@@ -128,7 +136,7 @@ class EventsProviderClient:
                 raise ObjectNotFound("не найден билет у клиента ")
             elif response.status_code == 400:
                 raise WrongRequest(
-                    f" Неверный запрос к клиенту {response.text}"
+                    f"Неверный запрос к клиенту {response.text}",
                 )
             elif response.status_code > 400:
                 response = await retry_request(
