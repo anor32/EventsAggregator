@@ -1,11 +1,8 @@
 import asyncio
-from collections.abc import Callable
 
-from fastapi import HTTPException
 from httpx import AsyncClient, Request, Response
 
 from app.core.exceptions import ClientServerError, ObjectNotFound, WrongRequest
-from app.settings.logs_config import api_logger
 
 
 async def retry_request(
@@ -32,21 +29,3 @@ async def retry_request(
         raise WrongRequest(
             f"Ошибка неправильный запрос клиента {response.text}", 400
         )
-
-
-def default_endpoint_exception(func: Callable):
-    async def wrapper():
-        try:
-            resp = await func()
-        except ValueError as e:
-            status, message = str(e).split("|")
-            print("here")
-            raise HTTPException(status_code=int(status), detail=message)
-        except Exception as e:
-            api_logger.error(e)
-            message = f"Внутреняя ошибка сервера{e}"
-            raise HTTPException(status_code=500, detail=message)
-        else:
-            return resp
-
-    return wrapper
