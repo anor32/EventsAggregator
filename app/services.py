@@ -6,7 +6,7 @@ from cachetools import TTLCache
 from app.clients.event_client import EventsProviderClient
 from app.core.exceptions import ClientServerError, ObjectNotFound
 from app.core.paginators import ApiPaginator
-from app.db.querries import DbRepository
+from app.db.queries import DbRepository
 from app.schemas.api import (
     ApiEventGetSchema,
     ApiEventsSchema,

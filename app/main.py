@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 def lifespan(app: FastAPI):
-    session = Session()  # <-- исправлено Session()
+    session = Session()
     db = DbRepository(session)
     client = EventsProviderClient()
     service = EventService(db, client)

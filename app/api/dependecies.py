@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import Depends
 
 from app.clients.event_client import EventsProviderClient
-from app.db.querries import DbRepository
+from app.db.queries import DbRepository
 from app.schemas.api import ApiGetPagesEvent
 from app.services import EventService
 from app.settings.db_config import Session
