@@ -1,4 +1,5 @@
 import asyncio
+from urllib.parse import urljoin
 
 from httpx import AsyncClient, Request, Response
 
@@ -29,3 +30,9 @@ async def retry_request(
         raise WrongRequest(
             f"Ошибка неправильный запрос клиента {response.text}", 400
         )
+
+
+def build_url(base_url: str, path: str) -> str:
+    base = base_url.rstrip("/")
+    path = path.lstrip("/")
+    return urljoin(base + "/", path)

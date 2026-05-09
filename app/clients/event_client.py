@@ -3,7 +3,7 @@ from httpx import TimeoutException
 
 from app.core.exceptions import ClientServerError, ObjectNotFound, WrongRequest
 from app.core.paginators import ClientEventsPaginator
-from app.core.utils import retry_request
+from app.core.utils import build_url, retry_request
 from app.schemas.api import EventRegisterPost
 from app.schemas.base import EventDeleteRegister
 from app.schemas.client import (
@@ -15,7 +15,7 @@ from app.settings.logs_config import api_logger
 
 
 class EventsProviderClient:
-    _base_url = CLIENT_HOST
+    _base_url = CLIENT_HOST.rstrip("/")
     _headers = {
         "x-api-key": EVENTS_API_KEY,
         "Content-Type": "application/json",
@@ -23,7 +23,7 @@ class EventsProviderClient:
     }
 
     async def get_pages(self, date) -> eventsResp | None:
-        url = self._base_url + f"/api/events/?changed_at={date}"
+        url = build_url(self._base_url, f"/api/events/?changed_at={date}")
         results = []
         async with httpx.AsyncClient() as client:
             paginator = ClientEventsPaginator(url, client, self._headers)
@@ -65,10 +65,10 @@ class EventsProviderClient:
         return eventsResp(results=results)
 
     async def get_seats(self, event_id) -> SeatsResponseSchema:
-        path = f"/api/events/{event_id}/seats/"
+        url = build_url(self._base_url, f"/api/events/{event_id}/seats/")
         async with httpx.AsyncClient() as client:
             response = await client.get(
-                self._base_url + path,
+                url,
                 headers=self._headers,
                 follow_redirects=True,
                 timeout=10,
@@ -86,11 +86,11 @@ class EventsProviderClient:
     async def register_to_event(
         self, event_id, body: EventRegisterPost
     ) -> dict[str]:
-        path = f"/api/events/{event_id}/register/"
+        url = build_url(self._base_url, f"/api/events/{event_id}/register/")
         body = body.model_dump()
         async with httpx.AsyncClient() as client:
             response = await client.post(
-                self._base_url + path,
+                url,
                 headers=self._headers,
                 follow_redirects=False,
                 json=body,
@@ -119,11 +119,11 @@ class EventsProviderClient:
         self, event_id, body: EventDeleteRegister
     ) -> dict[str, bool]:
         body = body.model_dump()
-        path = f"/api/events/{event_id}/unregister/"
+        url = build_url(self._base_url, f"/api/events/{event_id}/unregister/")
         async with httpx.AsyncClient() as client:
             response = await client.request(
                 method="DELETE",
-                url=self._base_url + path,
+                url=url,
                 json=body,
                 headers=self._headers,
                 follow_redirects=True,

@@ -2,6 +2,8 @@ from urllib.parse import urlencode
 
 from httpx import AsyncClient, Response
 
+from app.core.utils import build_url
+
 
 class ApiPaginator:
     def __init__(
@@ -26,7 +28,7 @@ class ApiPaginator:
             return None
         params = {"page": self.page + 1, "page_size": self.page_size}
         query = urlencode(params)
-        self._next_url = f"{self._base_url}{self.path}?{query}"
+        self._next_url = build_url(self._base_url, f"{self.path}?{query}")
         return self._next_url
 
     def get_previous_url(self) -> str | None:
@@ -34,7 +36,7 @@ class ApiPaginator:
             return None
         params = {"page": self.page - 1, "page_size": self.page_size}
         query = urlencode(params)
-        self.previous_url = f"{self._base_url}{self.path}?{query}"
+        self.previous_url = build_url(self._base_url, f"{self.path}?{query}")
         return self.previous_url
 
 
