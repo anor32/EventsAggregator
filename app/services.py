@@ -121,7 +121,6 @@ class EventService:
         event_id = self.db.get_event_by_ticket(ticket_id=ticket_id)
         body = EventDeleteRegister(ticket_id=ticket_id)
         message = await self.client.unregister_to_event(str(event_id), body)
-        api_logger.info(f"{ticket_id} sadsa")
         self.db.delete_ticket(ticket_id=ticket_id)
         available_seats = await self._get_from_cache_seats(str(event_id))
 
