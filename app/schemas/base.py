@@ -1,7 +1,14 @@
 from datetime import datetime
+from enum import Enum
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
+
+
+class EventStatus(str, Enum):
+    PUBLISHED = "published"
+    REGISTRATION_CLOSED = "registration_closed"
+    FINISHED = "finished"
 
 
 class PlaceSchema(BaseModel):
@@ -19,7 +26,7 @@ class EventSchema(BaseModel):
     place: PlaceSchema
     event_time: datetime
     registration_deadline: datetime
-    status: str
+    status: EventStatus
     number_of_visitors: int
 
 
